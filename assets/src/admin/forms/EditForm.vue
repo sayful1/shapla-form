@@ -33,7 +33,7 @@
                                 <div class="dcf-field-settings">
 
                                     <field-options
-                                            :option_field="{title:'Options'}"
+                                            :options="fieldOptions"
                                     />
 
                                     <template v-for="_field in formFields" v-if="_field.id === activeField.field_type">
@@ -163,6 +163,7 @@
                 messages: [],
                 activeField: {},
                 showFieldOption: false,
+                fieldOptions: [{label: 'Options', value: 'Options'}]
             }
         },
         computed: {

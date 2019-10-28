@@ -2,8 +2,8 @@
     <div class="field-option-data">
         <div class="panel-field-opt panel-field-opt-text">
             <label class="field-option-data__label clearfix">
-                <strong>{{ option_field.title }}</strong>
-                <help-text v-if="option_field.help_text" :text="option_field.help_text"></help-text>
+                <strong>{{ label }}</strong>
+                <help-text v-if="help_text" :text="help_text"></help-text>
                 <span class="pull-right">
                     <input type="checkbox" v-model="show_value">Show values
                 </span>
@@ -25,11 +25,10 @@
             </ul>
 
             <ul :class="['option-field-option-chooser margin-0', show_value ? 'show-value' : '']">
-                <li v-for="(option, index) in options" :key="option.id" :data-index="index"
-                    class="clearfix option-field-option">
+                <li v-for="(option, index) in options" :key="index" class="clearfix option-field-option">
                     <div class="option-field-option__selector">
                         <input
-                                v-if="option_field.is_multiple"
+                                v-if="multiple"
                                 type="checkbox"
                                 :value="option.value"
                                 v-model="selected"
@@ -59,7 +58,7 @@
                     </div>
 
                     <div class="action-buttons clearfix option-field-option__button">
-                        <span @click="delete_option(index)">
+                        <span @click="delete_option(option)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                                 <path d="M0 0h24v24H0z" fill="none"/>
                                 <path d="M7 11v2h10v-2H7zm5-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
@@ -77,8 +76,7 @@
                 </li>
             </ul>
 
-            <a v-if="!option_field.is_multiple && selected" href="#clear" @click.prevent="clear_selection">Clear
-                Selection</a>
+            <a v-if="!multiple && selected" href="#" @click.prevent="clear_selection">Clear Selection</a>
         </div>
     </div>
 </template>
@@ -87,18 +85,11 @@
     export default {
         name: "FieldOptions",
         props: {
-            option_field: {
-                type: Object, default: () => {
-                }
-            },
-            options: {
-                type: Array, default: () => [
-                    {id: 1, label: 'One', value: 'One'},
-                    {id: 2, label: 'Two', value: 'Two'},
-                    {id: 3, label: 'Three', value: 'Three'},
-                ]
-            },
-            selected: null,
+            label: {type: String, default: 'Options'},
+            help_text: {type: String, required: false},
+            multiple: {type: Boolean, default: false},
+            options: {type: Array, default: () => []},
+            selected: {default: null},
         },
         data() {
             return {
@@ -107,12 +98,17 @@
         },
         methods: {
             add_option() {
+                let num = this.options.length;
+                this.options.push({label: `Option ${num + 1}`, value: `Option ${num + 1}`})
             },
             set_option_label(index, label) {
+                this.options[index].value = label;
             },
-            delete_option(index) {
+            delete_option(option) {
+                this.$delete(this.options, this.options.indexOf(option));
             },
             clear_selection() {
+                this.selected = null;
             }
         }
     }
@@ -128,6 +124,13 @@
 
     .margin-0 {
         margin: 0 !important;
+    }
+
+    .plus-buttons {
+        border: 1px solid rgba(0, 0, 0, .6);
+        display: flex;
+        justify-content: center;
+        padding: 3px;
     }
 
     .option-field-option {
