@@ -141,8 +141,7 @@
 <script>
     import {CrudMixin} from "../../components/CrudMixin";
     import {tabs, tab} from 'shapla-tabs';
-    import toggles from '../../shapla/shapla-toggles/src/toggles';
-    import toggle from '../../shapla/shapla-toggles/src/toggle';
+    import {toggles, toggle} from 'shapla-toggles';
     import {columns, column} from 'shapla-columns'
     import Field from "./Field";
     import ButtonGroup from "../../components/ButtonGroup";

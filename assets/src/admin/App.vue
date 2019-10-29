@@ -23,11 +23,5 @@
 </script>
 
 <style lang="scss">
-    .dialog-contact-form-app {
-        box-sizing: border-box;
-
-        * {
-            box-sizing: border-box;
-        }
-    }
+    @import "admin";
 </style>

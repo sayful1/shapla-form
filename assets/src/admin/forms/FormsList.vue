@@ -3,29 +3,39 @@
         <h1 class="wp-heading-inline">Forms</h1>
         <a href="#" class="page-title-action" @click.prevent="openAddNewModal = true">Add New</a>
         <hr class="wp-header-end">
-        <status-list :statuses="metaData.statuses" @change="changeStatus"></status-list>
-        <data-table
-                :rows="items"
-                :columns="columns"
-                :actions="actions"
-                :bulk-actions="bulkActions"
-                :action-column="metaData.primaryColumn"
-                :current-page="currentPage"
-                :per-page="pagination.per_page"
-                :total-items="pagination.total_items"
-                @pagination="goToPage"
-                @action:click="handleAction"
-                @bulk:apply="handleBulkAction"
-                @search:submit="handleSearchSubmit"
-                @search:input="handleSearchInput"
-        >
-            <template slot="created_at" slot-scope="item">
-                {{(new Date(item.row.created_at)).toLocaleString()}}
-            </template>
-            <template slot="shortcode" slot-scope="item">
-                <copy-to-clipboard :value="item.row.shortcode">{{item.row.shortcode}}</copy-to-clipboard>
-            </template>
-        </data-table>
+        <columns :multiline="true">
+            <column :tablet="6">
+                <status-list :statuses="metaData.statuses" @change="changeStatus"></status-list>
+            </column>
+            <column :tablet="2"></column>
+            <column :tablet="4">
+                <search-form @search:submit="handleSearchSubmit" @search:input="handleSearchInput"></search-form>
+            </column>
+            <column :tablet="12">
+                <data-table
+                        :items="items"
+                        :columns="columns"
+                        :actions="actions"
+                        :bulk-actions="bulkActions"
+                        :action-column="metaData.primaryColumn"
+                        @action:click="handleAction"
+                        @bulk:apply="handleBulkAction"
+                        @search:submit="handleSearchSubmit"
+                        @search:input="handleSearchInput"
+                >
+                    <template slot="created_at" slot-scope="item">
+                        {{(new Date(item.row.created_at)).toLocaleString()}}
+                    </template>
+                    <template slot="shortcode" slot-scope="item">
+                        <copy-to-clipboard :value="item.row.shortcode">{{item.row.shortcode}}</copy-to-clipboard>
+                    </template>
+                </data-table>
+            </column>
+            <column :tablet="12">
+                <pagination :current_page="currentPage" :per_page="pagination.per_page"
+                            :total_items="pagination.total_items" @pagination="goToPage"></pagination>
+            </column>
+        </columns>
         <modal :active="openAddNewModal" @close="openAddNewModal = false" content-size="large" title="Form Templates">
             <columns :multiline="true">
                 <column :tablet="6" v-for="_template in templates" :key="_template.id">
@@ -52,13 +62,15 @@
     import modal from 'shapla-modal'
     import {columns, column} from 'shapla-columns'
     import dataTable from 'shapla-data-table';
-    import StatusList from "shapla-data-table/src/statusList";
+    import statusList from "shapla-data-table-status";
+    import pagination from "shapla-data-table-pagination";
+    import searchForm from "shapla-search-form";
     import CopyToClipboard from "../../components/CopyToClipboard";
 
     export default {
         name: "FormsList",
         mixins: [CrudMixin],
-        components: {CopyToClipboard, StatusList, dataTable, modal, columns, column},
+        components: {CopyToClipboard, statusList, dataTable, modal, columns, column, pagination, searchForm},
         data() {
             return {
                 openAddNewModal: false,

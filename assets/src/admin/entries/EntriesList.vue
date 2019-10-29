@@ -3,27 +3,28 @@
         <h1 class="wp-heading-inline">Entries</h1>
         <a href="#" class="page-title-action" @click="goBackToStatusPage">Back to Entries Counts</a>
         <hr class="wp-header-end">
-        <status-list :statuses="metaData.statuses" @change="changeStatus"></status-list>
-        <data-table
-                :rows="items"
-                :columns="columns"
-                :actions="actions"
-                :bulk-actions="bulkActions"
-                :action-column="metaData.primaryColumn"
-                :current-page="currentPage"
-                :per-page="pagination.per_page"
-                :total-items="pagination.total_items"
-                @pagination="goToPage"
-                @action:click="handleAction"
-                @bulk:apply="handleBulkAction"
-                @search:submit="handleSearchSubmit"
-                @search:input="handleSearchInput"
-        >
-            <template slot="created_at" slot-scope="item">
-                {{(new Date(item.row.created_at)).toLocaleString()}}
-            </template>
-            <template slot="shortcode" slot-scope="data">
-                <div class="shortcode-inside">
+        <columns :multiline="true">
+            <column :tablet="6">
+                <status-list :statuses="metaData.statuses" @change="changeStatus"></status-list>
+            </column>
+            <column :tablet="6">
+                <search-form @search:submit="handleSearchSubmit" @search:input="handleSearchInput"></search-form>
+            </column>
+            <column :tablet="12">
+                <data-table
+                        :items="items"
+                        :columns="columns"
+                        :actions="actions"
+                        :bulk-actions="bulkActions"
+                        :action-column="metaData.primaryColumn"
+                        @action:click="handleAction"
+                        @bulk:apply="handleBulkAction"
+                >
+                    <template slot="created_at" slot-scope="item">
+                        {{(new Date(item.row.created_at)).toLocaleString()}}
+                    </template>
+                    <template slot="shortcode" slot-scope="data">
+                        <div class="shortcode-inside">
                     <span class="svg-wrapper">
                         <span class="tooltip-text">Copy to clipboard</span>
                         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -31,21 +32,30 @@
                             <path d="M12.656 14v-9.344h-7.313v9.344h7.313zM12.656 3.344c0.719 0 1.344 0.594 1.344 1.313v9.344c0 0.719-0.625 1.344-1.344 1.344h-7.313c-0.719 0-1.344-0.625-1.344-1.344v-9.344c0-0.719 0.625-1.313 1.344-1.313h7.313zM10.656 0.656v1.344h-8v9.344h-1.313v-9.344c0-0.719 0.594-1.344 1.313-1.344h8z"></path>
                         </svg>
                     </span>
-                </div>
-            </template>
-        </data-table>
+                        </div>
+                    </template>
+                </data-table>
+            </column>
+            <column :tablet="12">
+                <pagination :current_page="currentPage" :per_page="pagination.per_page"
+                            :total_items="pagination.total_items" @pagination="goToPage"></pagination>
+            </column>
+        </columns>
     </div>
 </template>
 
 <script>
     import {CrudMixin} from "../../components/CrudMixin";
+    import {columns, column} from 'shapla-columns';
     import dataTable from 'shapla-data-table';
-    import StatusList from "shapla-data-table/src/statusList";
+    import statusList from "shapla-data-table-status";
+    import pagination from "shapla-data-table-pagination";
+    import searchForm from "shapla-search-form";
 
     export default {
         name: "EntriesList",
         mixins: [CrudMixin],
-        components: {StatusList, dataTable},
+        components: {statusList, dataTable, pagination, searchForm, columns, column},
         data() {
             return {
                 form_id: 0,

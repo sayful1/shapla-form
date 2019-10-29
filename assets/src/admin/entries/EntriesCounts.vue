@@ -3,13 +3,13 @@
         <div class="dcf-form-list">
             <div class="dcf-form-list-item" v-for="item in items">
                 <h3 class="dcf-form-item-title">{{item.form_title}}</h3>
-                <ul class="wp-status-list">
-                    <li v-for="status in getStatuses(item.counts)" :key="status.key" class="wp-status-list__item"
+                <ul class="shapla-status-list">
+                    <li v-for="status in getStatuses(item.counts)" :key="status.key" class="shapla-status-list__item"
                         :class="{'is-active':status.active}">
                         <a href="#" @click.prevent="changeStatus(item.form_id,status)"
-                           class="wp-status-list__item-link">
-                            <span class="wp-status-list__item-label">{{status.label}}</span>
-                            <span class="wp-status-list__item-count">({{status.count}})</span>
+                           class="shapla-status-list__item-link">
+                            <span class="shapla-status-list__item-label">{{status.label}}</span>
+                            <span class="shapla-status-list__item-count">({{status.count}})</span>
                         </a>
                     </li>
                 </ul>
@@ -20,11 +20,11 @@
 
 <script>
     import {CrudMixin} from "../../components/CrudMixin";
-    import StatusList from "../../shapla/shapla-data-table/src/statusList";
+    import statusList from "shapla-data-table-status";
 
     export default {
         name: "EntriesCounts",
-        components: {StatusList},
+        components: {statusList},
         mixins: [CrudMixin],
         data() {
             return {
