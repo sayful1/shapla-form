@@ -92,17 +92,38 @@ class Recaptcha2 extends Field {
 	 *
 	 * @return bool true on success, false on failure
 	 */
-	public function validate( $value = '' ) {
-		return self::_validate();
+	public function validate( $value ) {
+		$secret_key = Utils::get_option( 'recaptcha_secret_key' );
+		if ( empty( $value ) || empty( $secret_key ) ) {
+			return false;
+		}
+
+		$response = wp_remote_post( self::SITE_VERIFY_URL, [
+			'body' => [
+				'secret'   => $secret_key,
+				'response' => $value,
+				'remoteip' => self::getRemoteIpAddress(),
+			]
+		] );
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( isset( $body['success'] ) && true === $body['success'] ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
 	 * Sanitize field value
 	 *
 	 * @param mixed $value
+	 *
+	 * @return mixed
 	 */
 	public function sanitize( $value ) {
-		// TODO: Implement sanitize() method.
+		return $value;
 	}
 
 	/**
@@ -124,26 +145,9 @@ class Recaptcha2 extends Field {
 	 * @return bool
 	 */
 	public static function _validate() {
-		$secret_key   = Utils::get_option( 'recaptcha_secret_key' );
 		$captcha_code = isset( $_POST['g-recaptcha-response'] ) ? $_POST['g-recaptcha-response'] : null;
-		if ( empty( $captcha_code ) || empty( $secret_key ) ) {
-			return false;
-		}
 
-		$_response = wp_remote_post( self::SITE_VERIFY_URL, array(
-			'body' => array(
-				'secret'   => $secret_key,
-				'response' => $captcha_code,
-				'remoteip' => self::getRemoteIpAddress(),
-			)
-		) );
-		$body      = json_decode( wp_remote_retrieve_body( $_response ), true );
-
-		if ( isset( $body['success'] ) && true === $body['success'] ) {
-			return true;
-		}
-
-		return false;
+		return ( new static )->validate( $captcha_code );
 	}
 
 	/**

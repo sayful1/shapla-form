@@ -9,6 +9,7 @@ use DialogContactForm\Fields\File;
 use DialogContactForm\Fields\Recaptcha2;
 use DialogContactForm\Supports\Attachment;
 use DialogContactForm\Supports\Config;
+use DialogContactForm\Supports\ContactForm;
 use DialogContactForm\Supports\UploadedFile;
 use DialogContactForm\Supports\Utils;
 
@@ -84,32 +85,16 @@ class Submission {
 		$fields = $form->getFormFields();
 
 		/**
-		 * @var \DialogContactForm\Supports\Config $form
+		 * @var Config|ContactForm $form
 		 */
 		do_action( 'dialog_contact_form/before_validation', $form );
 
-		$error_data = array();
-		$files      = array();
-
+		$files = array();
 		if ( $form->hasFile() ) {
 			$files = UploadedFile::getUploadedFiles();
 		}
 
-		/** @var Field|File $field */
-		foreach ( $fields as $field ) {
-			$field_name = $field->get( 'field_name' );
-			if ( 'file' == $field->get( 'field_type' ) ) {
-				$file    = isset( $files[ $field_name ] ) ? $files[ $field_name ] : false;
-				$message = Attachment::validate( $file, $field, $form );
-			} else {
-				$value   = isset( $_POST[ $field_name ] ) ? $_POST[ $field_name ] : null;
-				$message = $this->validate( $value, $field, $form );
-			}
-
-			if ( count( $message ) > 0 ) {
-				$error_data[ $field_name ] = $message;
-			}
-		}
+		$error_data = $this->validate_fields( $_POST, $files, $form );
 
 		// If Google reCAPTCHA enabled, verify it
 		if ( $form->hasRecaptcha() && ! Recaptcha2::_validate() ) {
@@ -117,7 +102,7 @@ class Submission {
 		}
 
 		/**
-		 * @var \DialogContactForm\Supports\Config $form
+		 * @var Config $form
 		 * @var array $error_data
 		 */
 		do_action( 'dialog_contact_form/after_validation', $form, $error_data );
@@ -141,17 +126,7 @@ class Submission {
 		}
 
 		// Sanitize form data
-		$data = array();
-		/** @var Field $field */
-		foreach ( $fields as $field ) {
-			if ( 'file' === $field->get( 'field_type' ) || ! $field->isFillable() ) {
-				continue;
-			}
-
-			$value = isset( $_POST[ $field->get( 'field_name' ) ] ) ? $_POST[ $field->get( 'field_name' ) ] : '';
-
-			$data[ $field->get( 'field_name' ) ] = $field->sanitize( $value );
-		}
+		$data = $this->sanitize_fields_data( $_POST, $form );
 
 		// If form upload a file, handle here
 		if ( $form->hasFile() ) {
@@ -159,38 +134,7 @@ class Submission {
 			$data        = $data + $attachments;
 		}
 
-		$response = array();
-		$actions  = Actions::init();
-
-		foreach ( $actions as $action_id => $className ) {
-
-			if ( ! in_array( $action_id, $form->getFormActions() ) ) {
-				continue;
-			}
-
-			$action = new $className;
-			if ( ! $action instanceof Action ) {
-				continue;
-			}
-
-			$response[ $action->getId() ] = $action::process( $form, $data );
-		}
-
-		// If any action fails, display error message
-		if ( false !== array_search( false, array_values( $response ), true ) ) {
-			if ( $this->is_ajax() ) {
-				wp_send_json( array(
-					'status'  => 'fail',
-					'time'    => microtime( true ) - $start,
-					'message' => $form->getMailSendFailMessage(),
-					'actions' => $response,
-				), 500 );
-			}
-
-			$GLOBALS['_dcf_validation_error'] = $form->getMailSendFailMessage();
-
-			return;
-		}
+		$response = $this->run_form_actions( $data, $form );
 
 		if ( $this->is_ajax() ) {
 			// Display success message
@@ -224,16 +168,76 @@ class Submission {
 	}
 
 	/**
-	 * Validate form field
+	 * Sanitize fields data
 	 *
-	 * @param mixed $value
-	 * @param \DialogContactForm\Abstracts\Field $field
-	 * @param \DialogContactForm\Supports\Config $config
+	 * @param array $data
+	 * @param ContactForm $form
 	 *
 	 * @return array
 	 */
-	private function validate( $value, $field, $config ) {
-		$messages      = $config->getValidationMessages();
+	public function sanitize_fields_data( array $data, $form ) {
+		$sanitized_data = array();
+
+		/** @var Field[] $fields */
+		$fields = $form->getFormFields();
+
+		foreach ( $fields as $field ) {
+			if ( 'file' === $field->get( 'field_type' ) || ! $field->isFillable() ) {
+				continue;
+			}
+
+			$value = isset( $data[ $field->get( 'field_name' ) ] ) ? $data[ $field->get( 'field_name' ) ] : '';
+
+			$sanitized_data[ $field->get( 'field_name' ) ] = $field->sanitize( $value );
+		}
+
+		return $sanitized_data;
+	}
+
+	/**
+	 * Validate all fields
+	 *
+	 * @param array $data
+	 * @param array $files
+	 * @param ContactForm $form
+	 *
+	 * @return array empty array if no error, otherwise it will add error data
+	 */
+	public function validate_fields( array $data, array $files, $form ) {
+		$error_data = [];
+
+		/** @var Field[]|File[] $field */
+		$fields = $form->getFormFields();
+
+		foreach ( $fields as $field ) {
+			$field_name = $field->get( 'field_name' );
+			if ( 'file' == $field->get( 'field_type' ) ) {
+				$file    = isset( $files[ $field_name ] ) ? $files[ $field_name ] : false;
+				$message = Attachment::validate( $file, $field, $form );
+			} else {
+				$value   = isset( $data[ $field_name ] ) ? $data[ $field_name ] : null;
+				$message = $this->validate_field( $value, $field, $form );
+			}
+
+			if ( count( $message ) > 0 ) {
+				$error_data[ $field_name ] = $message;
+			}
+		}
+
+		return $error_data;
+	}
+
+	/**
+	 * Validate form field
+	 *
+	 * @param mixed $value
+	 * @param Field $field
+	 * @param Config|ContactForm $contact_form
+	 *
+	 * @return array
+	 */
+	public function validate_field( $value, $field, $contact_form ) {
+		$messages      = $contact_form->getValidationMessages();
 		$message       = array();
 		$message_key   = sprintf( 'invalid_%s', $field->get( 'field_type' ) );
 		$error_message = isset( $messages[ $message_key ] ) ? $messages[ $message_key ] : $messages['generic_error'];
@@ -292,5 +296,34 @@ class Submission {
 	 */
 	private function is_ajax() {
 		return defined( 'DOING_AJAX' ) && DOING_AJAX;
+	}
+
+	/**
+	 * Run form actions
+	 *
+	 * @param array $data
+	 * @param ContactForm $form
+	 *
+	 * @return array
+	 */
+	public function run_form_actions( array $data, $form ) {
+		$response = array();
+		$actions  = Actions::init();
+
+		foreach ( $actions as $action_id => $className ) {
+
+			if ( ! in_array( $action_id, $form->getFormActions() ) ) {
+				continue;
+			}
+
+			$action = new $className;
+			if ( ! $action instanceof Action ) {
+				continue;
+			}
+
+			$response[ $action->getId() ] = $action::process( $form, $data );
+		}
+
+		return $response;
 	}
 }

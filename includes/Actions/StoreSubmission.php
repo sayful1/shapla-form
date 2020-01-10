@@ -36,7 +36,9 @@ class StoreSubmission extends Action {
 	public static function process( $config, $data ) {
 		$entry = new Entry();
 
-		return $entry->insert( $data );
+		$data['form_id'] = $config->getId();
+
+		return $entry->create( $data );
 	}
 
 	/**

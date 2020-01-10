@@ -2,6 +2,8 @@
 
 namespace DialogContactForm\Abstracts;
 
+use DialogContactForm\Supports\Config;
+use DialogContactForm\Supports\ContactForm;
 use DialogContactForm\Supports\Metabox;
 
 // Exit if accessed directly
@@ -61,7 +63,7 @@ abstract class Action {
 	/**
 	 * Process current action
 	 *
-	 * @param \DialogContactForm\Supports\Config $config Contact form configurations
+	 * @param Config|ContactForm $config Contact form configurations
 	 * @param array $data User submitted sanitized data
 	 *
 	 * @return mixed

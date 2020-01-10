@@ -554,6 +554,15 @@ class ContactForm {
 	}
 
 	/**
+	 * Get form ID
+	 *
+	 * @return bool
+	 */
+	public function getFormId() {
+		return $this->getId();
+	}
+
+	/**
 	 * Get current form id
 	 *
 	 * @return int

@@ -3,6 +3,8 @@
 namespace DialogContactForm\Supports;
 
 // Exit if accessed directly
+use DialogContactForm\Fields\File;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -12,9 +14,9 @@ class Attachment {
 	/**
 	 * Get error message for each uploaded files
 	 *
-	 * @param \DialogContactForm\Supports\UploadedFile $file
-	 * @param \DialogContactForm\Fields\File $field
-	 * @param \DialogContactForm\Supports\Config $config
+	 * @param UploadedFile $file
+	 * @param File $field
+	 * @param Config $config
 	 *
 	 * @return string
 	 */
@@ -54,9 +56,9 @@ class Attachment {
 	/**
 	 * Validate file field
 	 *
-	 * @param array|\DialogContactForm\Supports\UploadedFile $file
-	 * @param \DialogContactForm\Fields\File $field
-	 * @param \DialogContactForm\Supports\Config $config
+	 * @param array|UploadedFile $file
+	 * @param File $field
+	 * @param Config|ContactForm $config
 	 *
 	 * @return array
 	 */
@@ -126,7 +128,7 @@ class Attachment {
 	/**
 	 * Upload attachment
 	 *
-	 * @param \DialogContactForm\Supports\UploadedFile $file
+	 * @param UploadedFile $file
 	 *
 	 * @return array
 	 */

@@ -2,10 +2,17 @@
 
 namespace DialogContactForm\REST;
 
+use DialogContactForm\Abstracts\Field;
 use DialogContactForm\Abstracts\Template;
 use DialogContactForm\Collections\Templates;
 use DialogContactForm\Entries\Entry;
+use DialogContactForm\Fields\File;
+use DialogContactForm\Fields\Recaptcha2;
+use DialogContactForm\Submission;
+use DialogContactForm\Supports\Attachment;
+use DialogContactForm\Supports\Config;
 use DialogContactForm\Supports\ContactForm;
+use DialogContactForm\Supports\UploadedFile;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -77,7 +84,7 @@ class FormController extends ApiController {
 		register_rest_route( $this->namespace, '/forms/(?P<id>\d+)/feedback', [
 			[
 				'methods'  => WP_REST_Server::CREATABLE,
-				'callback' => 'create_feedback',
+				'callback' => [ $this, 'create_feedback' ],
 			],
 		] );
 	}
@@ -249,7 +256,62 @@ class FormController extends ApiController {
 	 * @return WP_REST_Response
 	 */
 	public function create_feedback( $request ) {
-		return $this->respondCreated();
+		$id = (int) $request->get_param( 'id' );
+
+		$form = new ContactForm( $id );
+
+		if ( ! $form->isValid() ) {
+			return $this->respondNotFound( 'form_not_found', __( 'No form found with that id.', 'dialog-contact-form' ) );
+		}
+
+		/**
+		 * @var ContactForm $form
+		 */
+		do_action( 'dialog_contact_form/before_validation', $form );
+
+		$files = array();
+		if ( $form->hasFile() ) {
+			$files = UploadedFile::getUploadedFiles();
+		}
+
+		$submission = new Submission;
+
+		/** @var Field[]|File[] $field */
+		$fields = $form->getFormFields();
+		$params = $request->get_params();
+
+		$error_data = $submission->validate_fields( $params, $files, $form );
+
+		// If Google reCAPTCHA enabled, verify it
+		$g_response = $request->get_param( 'g-recaptcha-response' );
+		if ( $form->hasRecaptcha() && ! ( new Recaptcha2 )->validate( $g_response ) ) {
+			$error_data['g_recaptcha'] = array( $form->getInvalidRecaptchaMessage() );
+		}
+
+		/**
+		 * @var Config|ContactForm $form
+		 * @var array $error_data
+		 */
+		do_action( 'dialog_contact_form/after_validation', $form, $error_data );
+
+
+		// Exit if there is any error
+		if ( count( $error_data ) > 0 ) {
+			return $this->respondUnprocessableEntity( 'incomplete_data', $form->getValidationErrorMessage(), $error_data );
+		}
+
+		// Sanitize form data
+		$data = $submission->sanitize_fields_data( $params, $form );
+
+		// If form upload a file, handle here
+		if ( $form->hasFile() ) {
+			$attachments = Attachment::upload( $files, $fields );
+			$data        = $data + $attachments;
+		}
+
+		$response = $submission->run_form_actions( $data, $form );
+
+		return $this->respondCreated( $response );
 	}
 
 	/**

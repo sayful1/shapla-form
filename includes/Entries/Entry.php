@@ -447,6 +447,44 @@ class Entry implements JsonSerializable, ArrayAccess {
 	}
 
 	/**
+	 * @param array $data
+	 *
+	 * @return int
+	 */
+	public function create( array $data ) {
+		$_data = array(
+			'form_id'    => intval( $data['form_id'] ),
+			'user_id'    => get_current_user_id(),
+			'user_ip'    => Utils::get_remote_ip(),
+			'user_agent' => Utils::get_user_agent(),
+			'referer'    => ! empty( $data['referer'] ) ? sanitize_text_field( $data['referer'] ) : '',
+			'status'     => 'unread',
+			'created_at' => current_time( 'mysql' ),
+		);
+		$this->db->insert( $this->table_name, $_data );
+
+		$insert_id = $this->db->insert_id;
+		if ( $insert_id ) {
+
+			$meta_data = array();
+			foreach ( $data as $key => $value ) {
+				if ( in_array( $key, array_keys( $_data ) ) ) {
+					continue;
+				}
+				$meta_data[] = array(
+					'entry_id'   => $insert_id,
+					'meta_key'   => $key,
+					'meta_value' => $this->serialize( $value ),
+				);
+			}
+
+			$this->insertMultipleRows( $this->meta_table_name, $meta_data );
+		}
+
+		return $insert_id;
+	}
+
+	/**
 	 * Insert a row into a entries table with meta values.
 	 *
 	 * @param array $data Form data in $key => 'value' format

@@ -30,13 +30,4 @@ class Config extends ContactForm {
 
 		return self::$instance;
 	}
-
-	/**
-	 * Get form ID
-	 *
-	 * @return bool
-	 */
-	public function getFormId() {
-		return $this->getId();
-	}
 }
