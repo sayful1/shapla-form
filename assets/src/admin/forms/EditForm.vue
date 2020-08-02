@@ -1,6 +1,6 @@
 <template>
     <div class="dialog-contact-form--edit-form">
-        <h1 class="wp-heading-inline">Edit Form: {{title}}</h1>
+        <h1 class="wp-heading-inline">Edit Form: {{ title }}</h1>
         <a href="#" class="page-title-action" @click.prevent="backToForms">Back to Forms</a>
         <hr class="wp-header-end">
         <tabs>
@@ -65,8 +65,8 @@
                                                                   :settings="buttonSetSettings(_setting)"></button-group>
                                                 </template>
                                                 <template v-else>
-                                                    {{_id}}
-                                                    {{_setting}}
+                                                    {{ _id }}
+                                                    {{ _setting }}
                                                 </template>
                                             </div>
                                         </template>
@@ -84,7 +84,7 @@
                             <template v-for="(action,key) in actions">
                                 <toggle v-for="_action in formActions" :name="_action.title" v-if="key === _action.id"
                                         :key="_action.id">
-                                    {{_action.settings}}
+                                    {{ _action.settings }}
                                 </toggle>
                             </template>
                         </toggles>
@@ -92,7 +92,7 @@
                     <column :tablet="4">
                         <h4>Available Actions</h4>
                         <div v-for="_action in formActions" :key="_action.id">
-                            <button class="button">{{_action.title}}</button>
+                            <button class="button">{{ _action.title }}</button>
                         </div>
                     </column>
                 </columns>
@@ -139,166 +139,166 @@
 </template>
 
 <script>
-    import {CrudMixin} from "../../components/CrudMixin";
-    import {tabs, tab} from 'shapla-tabs';
-    import {toggles, toggle} from 'shapla-toggles';
-    import {columns, column} from 'shapla-columns'
-    import Field from "./Field";
-    import ButtonGroup from "../../components/ButtonGroup";
-    import draggable from 'vuedraggable'
-    import FieldOptions from "../../components/FieldOptions";
+import {CrudMixin} from "../../components/CrudMixin";
+import {tabs, tab} from 'shapla-tabs';
+import {toggles, toggle} from 'shapla-toggles';
+import {columns, column} from 'shapla-columns'
+import Field from "./Field";
+import ButtonGroup from "../../components/ButtonGroup";
+import draggable from 'vuedraggable'
+import FieldOptions from "../../components/field-options/FieldOptions";
 
-    export default {
-        name: "EditForm",
-        mixins: [CrudMixin],
-        components: {FieldOptions, ButtonGroup, Field, tabs, tab, columns, column, toggles, toggle, draggable},
-        data() {
-            return {
-                id: 0,
-                title: '',
-                fields: [],
-                actions: [],
-                settings: [],
-                messages: [],
-                activeField: {},
-                showFieldOption: false,
-                fieldOptions: [{label: 'Options', value: 'Options'}]
-            }
+export default {
+    name: "EditForm",
+    mixins: [CrudMixin],
+    components: {FieldOptions, ButtonGroup, Field, tabs, tab, columns, column, toggles, toggle, draggable},
+    data() {
+        return {
+            id: 0,
+            title: '',
+            fields: [],
+            actions: [],
+            settings: [],
+            messages: [],
+            activeField: {},
+            showFieldOption: false,
+            fieldOptions: [{label: 'Options', value: 'Options', selected: false}]
+        }
+    },
+    computed: {
+        formActions() {
+            return window.dialogContactForm.actions;
         },
-        computed: {
-            formActions() {
-                return window.dialogContactForm.actions;
-            },
-            formFields() {
-                return window.dialogContactForm.fields;
-            },
-            formSettings() {
-                return window.dialogContactForm.settings;
-            },
-            formMessages() {
-                return window.dialogContactForm.messages;
-            },
-            hasActiveField() {
-                return Object.keys(this.activeField).length;
-            }
+        formFields() {
+            return window.dialogContactForm.fields;
         },
-        mounted() {
-            this.id = this.$route.params.id;
-            this.$store.commit('SET_LOADING_STATUS', false);
-            this.getForm();
+        formSettings() {
+            return window.dialogContactForm.settings;
         },
-        methods: {
-            onTabChange(name) {
-                if (name === 'Field Settings') {
-                    if (!this.hasActiveField) {
-                        this.activeField = this.fields[0];
-                        this.showFieldOption = true;
-                    }
-                } else {
-                    this.activeField = {};
-                    this.showFieldOption = false;
-                }
-            },
-            getForm() {
-                this.$store.commit('SET_LOADING_STATUS', true);
-                this.get_item(dcfSettings.restRoot + '/forms/' + this.id).then(response => {
-                    console.log(response);
-                    this.title = response.title;
-                    this.fields = response.fields;
-                    this.actions = response.actions;
-                    this.settings = response.settings;
-                    this.messages = response.messages;
-                    this.$store.commit('SET_LOADING_STATUS', false);
-                }).catch(error => {
-                    console.log(error);
-                    this.$store.commit('SET_LOADING_STATUS', false);
-                })
-            },
-            isTextField(type) {
-                return -1 !== ['text', 'email', 'url', 'date', 'password'].indexOf(type);
-            },
-            backToForms() {
-                this.$router.push({name: 'FormsList'});
-            },
-            handleFieldAction(action, field) {
-                let index = this.fields.indexOf(field);
-                if ('edit' === action) {
-                    this.activeField = field;
+        formMessages() {
+            return window.dialogContactForm.messages;
+        },
+        hasActiveField() {
+            return Object.keys(this.activeField).length;
+        }
+    },
+    mounted() {
+        this.id = this.$route.params.id;
+        this.$store.commit('SET_LOADING_STATUS', false);
+        this.getForm();
+    },
+    methods: {
+        onTabChange(name) {
+            if (name === 'Field Settings') {
+                if (!this.hasActiveField) {
+                    this.activeField = this.fields[0];
                     this.showFieldOption = true;
                 }
-                if ('delete' === action && confirm('Are you sure to delete?')) {
-                    this.$delete(this.fields, index);
-                }
-                if ('duplicate' === action && confirm('Are you sure to duplicate?')) {
-                    let _field = JSON.parse(JSON.stringify(field));
-                    _field['field_name'] = _field['field_id'] = field['field_id'] + '-copy';
-                    _field['field_title'] = field['field_title'] + ' Copy';
-                    this.fields.splice(index + 1, 0, _field);
-                }
-            },
-            addNewField(field) {
-                let data = {
-                    field_type: field.type,
-                    field_title: field.title + '',
-                    field_id: '',
-                    required_field: '',
-                    field_class: '',
-                    field_width: 'is-12',
-                    autocomplete: '',
-                    placeholder: '',
-                };
-                this.fields.push(data);
-            },
-            buttonSetSettings(_setting) {
-                return {
-                    id: '',
-                    options: _setting.options,
-                }
-            },
-        }
+            } else {
+                this.activeField = {};
+                this.showFieldOption = false;
+            }
+        },
+        getForm() {
+            this.$store.commit('SET_LOADING_STATUS', true);
+            this.get_item(dcfSettings.restRoot + '/forms/' + this.id).then(response => {
+                console.log(response);
+                this.title = response.title;
+                this.fields = response.fields;
+                this.actions = response.actions;
+                this.settings = response.settings;
+                this.messages = response.messages;
+                this.$store.commit('SET_LOADING_STATUS', false);
+            }).catch(error => {
+                console.log(error);
+                this.$store.commit('SET_LOADING_STATUS', false);
+            })
+        },
+        isTextField(type) {
+            return -1 !== ['text', 'email', 'url', 'date', 'password'].indexOf(type);
+        },
+        backToForms() {
+            this.$router.push({name: 'FormsList'});
+        },
+        handleFieldAction(action, field) {
+            let index = this.fields.indexOf(field);
+            if ('edit' === action) {
+                this.activeField = field;
+                this.showFieldOption = true;
+            }
+            if ('delete' === action && confirm('Are you sure to delete?')) {
+                this.$delete(this.fields, index);
+            }
+            if ('duplicate' === action && confirm('Are you sure to duplicate?')) {
+                let _field = JSON.parse(JSON.stringify(field));
+                _field['field_name'] = _field['field_id'] = field['field_id'] + '-copy';
+                _field['field_title'] = field['field_title'] + ' Copy';
+                this.fields.splice(index + 1, 0, _field);
+            }
+        },
+        addNewField(field) {
+            let data = {
+                field_type: field.type,
+                field_title: field.title + '',
+                field_id: '',
+                required_field: '',
+                field_class: '',
+                field_width: 'is-12',
+                autocomplete: '',
+                placeholder: '',
+            };
+            this.fields.push(data);
+        },
+        buttonSetSettings(_setting) {
+            return {
+                id: '',
+                options: _setting.options,
+            }
+        },
     }
+}
 </script>
 
 <style lang="scss">
-    .dcf-available-field {
-        display: flex;
-        border: 1px solid darkgreen;
-        border-radius: 4px;
+.dcf-available-field {
+    display: flex;
+    border: 1px solid darkgreen;
+    border-radius: 4px;
 
-        &__icon,
-        &__title {
-            padding: 5px;
-        }
-
-        &__icon {
-            padding-right: 5px;
-
-            svg {
-                display: block;
-                height: 16px;
-                width: 16px;
-            }
-        }
-
-        &__title {
-        }
+    &__icon,
+    &__title {
+        padding: 5px;
     }
 
-    .dcf-field-settings {
-        background: #fff;
-        padding: 10px;
+    &__icon {
+        padding-right: 5px;
 
-        &__control {
-            margin-bottom: 15px;
-        }
-
-        &__label {
+        svg {
             display: block;
-            margin-bottom: 5px;
-        }
-
-        .dcf-button-group {
-            display: flex;
+            height: 16px;
+            width: 16px;
         }
     }
+
+    &__title {
+    }
+}
+
+.dcf-field-settings {
+    background: #fff;
+    padding: 10px;
+
+    &__control {
+        margin-bottom: 15px;
+    }
+
+    &__label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .dcf-button-group {
+        display: flex;
+    }
+}
 </style>
