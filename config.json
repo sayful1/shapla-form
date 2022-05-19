@@ -1,3 +1,28 @@
 {
-	"proxyURL": "http://plugins.test/wp-admin/edit.php?post_type=dialog-contact-form&page=dcf-forms"
+  "proxyURL": "http://plugins.test/wp-admin/edit.php?post_type=dialog-contact-form&page=dcf-forms",
+  "entryPoints": {
+    "frontend": [
+      "./assets/scss/style.scss",
+      "./assets/src/public/form.js",
+      "./assets/src/public/modal.js"
+    ],
+    "admin": [
+      "./assets/scss/admin.scss",
+      "./assets/src/admin/admin.js",
+      "./assets/src/admin/main.js",
+      "./assets/src/admin/settings/main.js",
+      "./assets/src/admin/forms/main.js"
+    ],
+    "gutenberg-block": [
+      "./assets/scss/gutenberg-block.scss",
+      "./assets/src/gutenberg/gutenberg-block.js"
+    ],
+    "select2": [
+      "./assets/scss/select2.scss"
+    ],
+    "polyfill": [
+      "./assets/src/polyfill/classList.js",
+      "./assets/src/polyfill/validityState.js"
+    ]
+  }
 }

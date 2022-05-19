@@ -1,83 +1,69 @@
 const path = require('path');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const TerserPlugin = require('terser-webpack-plugin');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
-const autoprefixer = require('autoprefixer');
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const {VueLoaderPlugin} = require('vue-loader');
+const svgToMiniDataURI = require('mini-svg-data-uri');
 
 const config = require('./config.json');
-
-let plugins = [];
-let entryPoints = {
-    frontend: [
-        "./assets/scss/style.scss",
-        "./assets/src/public/form.js",
-        "./assets/src/public/modal.js",
-    ],
-    admin: [
-        "./assets/scss/admin.scss",
-        "./assets/src/admin/admin.js",
-        "./assets/src/admin/main.js",
-        "./assets/src/admin/settings/main.js",
-        "./assets/src/admin/forms/main.js",
-    ],
-    'gutenberg-block': [
-        "./assets/scss/gutenberg-block.scss",
-        "./assets/src/gutenberg/gutenberg-block.js"
-    ],
-    'select2': [
-        "./assets/scss/select2.scss",
-    ],
-    polyfill: [
-        "./assets/src/polyfill/classList.js",
-        "./assets/src/polyfill/validityState.js",
-    ],
-};
-
-plugins.push(new MiniCssExtractPlugin({
-    filename: "../css/[name].css"
-}));
-
-plugins.push(new BrowserSyncPlugin({
-    proxy: config.proxyURL
-}));
-
-plugins.push(new VueLoaderPlugin());
 
 module.exports = (env, argv) => {
     let isDev = argv.mode !== 'production';
 
+    let plugins = [];
+
+    plugins.push(new MiniCssExtractPlugin({
+        filename: "../css/[name].css"
+    }));
+
+    plugins.push(new BrowserSyncPlugin({
+        proxy: config.proxyURL
+    }));
+
+    plugins.push(new VueLoaderPlugin());
+
     return {
-        "entry": entryPoints,
+        "entry": config.entryPoints,
         "output": {
             "path": path.resolve(__dirname, 'assets/js'),
             "filename": '[name].js'
         },
-        "devtool": isDev ? 'eval-source-map' : false,
+        "devtool": isDev ? 'source-map' : false,
         "module": {
             "rules": [
                 {
-                    "test": /\.js$/,
-                    "use": {
-                        "loader": "babel-loader",
-                        "options": {
-                            presets: ['@babel/preset-env']
+                    test: /\.(js|jsx)$/i,
+                    use: {
+                        loader: "babel-loader",
+                        options: {
+                            presets: [
+                                '@babel/preset-env',
+                                '@babel/preset-react'
+                            ],
+                            plugins: [
+                                ['@babel/plugin-proposal-class-properties'],
+                                ['@babel/plugin-proposal-private-methods'],
+                                ['@babel/plugin-proposal-object-rest-spread'],
+                            ]
                         }
                     }
                 },
                 {
-                    test: /\.vue$/,
+                    test: /\.vue$/i,
                     use: [
                         {loader: 'vue-loader'}
                     ]
                 },
                 {
-                    test: /\.(sass|scss)$/,
+                    test: /\.(sass|scss|css)$/i,
                     use: [
-                        {
-                            loader: isDev ? "vue-style-loader" : MiniCssExtractPlugin.loader
-                        },
+                        isDev ?
+                            {loader: "style-loader"} :
+                            {
+                                loader: MiniCssExtractPlugin.loader,
+                                options: {publicPath: ''}
+                            },
                         {
                             loader: "css-loader",
                             options: {
@@ -89,7 +75,11 @@ module.exports = (env, argv) => {
                             loader: "postcss-loader",
                             options: {
                                 sourceMap: isDev,
-                                plugins: () => [autoprefixer()],
+                                postcssOptions: {
+                                    plugins: [
+                                        ['postcss-preset-env'],
+                                    ],
+                                },
                             },
                         },
                         {
@@ -101,18 +91,34 @@ module.exports = (env, argv) => {
                     ]
                 },
                 {
-                    test: /\.(png|je?pg|gif|svg|eot|ttf|woff|woff2)$/,
-                    use: [
-                        {loader: 'file-loader'},
-                    ],
+                    test: /\.(eot|ttf|woff|woff2)$/i,
+                    type: 'asset/resource',
+                    generator: {
+                        filename: '../fonts/[hash][ext]'
+                    }
                 },
+                {
+                    test: /\.(png|je?pg|gif)$/i,
+                    type: 'asset',
+                    generator: {
+                        filename: '../images/[hash][ext]'
+                    }
+                },
+                {
+                    test: /\.svg$/i,
+                    type: 'asset',
+                    generator: {
+                        filename: '../images/[hash][ext]',
+                        dataUrl: content => svgToMiniDataURI(content.toString())
+                    },
+                }
             ]
         },
         optimization: {
             minimizer: [
                 new TerserPlugin(),
-                new OptimizeCSSAssetsPlugin()
-            ]
+                new CssMinimizerPlugin()
+            ],
         },
         resolve: {
             alias: {
@@ -128,4 +134,4 @@ module.exports = (env, argv) => {
         },
         "plugins": plugins
     }
-};
+}
