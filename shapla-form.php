@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: Dialog Contact Form
- * Plugin URI: http://wordpress.org/plugins/dialog-contact-form/
+ * Plugin Name: Shapla Form
+ * Plugin URI: https://github.com/sayful1/shapla-form
  * Description: Just another WordPress contact form plugin. Simple but flexible.
  * Version: 3.1.0
  * Author: Sayful Islam
  * Author URI: https://sayfulislam.com
  * Requires at least: 4.7
- * Tested up to: 5.2
- * Text Domain: dialog-contact-form
+ * Tested up to: 6.0
+ * Text Domain: shapla-form
  * License: GPLv3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.txt
  */
@@ -34,7 +34,7 @@ if ( ! class_exists( 'Dialog_Contact_Form' ) ) {
 		 *
 		 * @var string
 		 */
-		private $plugin_name = 'dialog-contact-form';
+		private $plugin_name = 'shapla-form';
 
 		/**
 		 * Plugin custom post type
@@ -62,7 +62,7 @@ if ( ! class_exists( 'Dialog_Contact_Form' ) ) {
 		 *
 		 * @var string
 		 */
-		private $min_php = '5.3';
+		private $min_php = '7.0';
 
 		/**
 		 * Ensures only one instance of the class is loaded or can be loaded.

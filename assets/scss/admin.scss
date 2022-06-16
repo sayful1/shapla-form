@@ -1,3 +1,9 @@
+@use "shapla-css/src/index" as shapla;
+
+@include shapla.columns;
+@include shapla.modal;
+@include shapla.delete-icon;
+
 // sass --watch assets/scss/admin.scss:assets/css/admin.css --style compressed
 @import "utilities/variables";
 @import "utilities/mixins";
@@ -96,6 +102,7 @@ code.mailtag.code {
 			float: left;
 			margin-right: 3px;
 		}
+
 		&.is-last {
 			float: right;
 			margin-left: 3px;
@@ -171,9 +178,11 @@ code.mailtag.code {
 				&.column-title {
 					width: calc(50% - 2.5em);
 				}
+
 				&.column-shortcode {
 					width: 40%;
 				}
+
 				&.column-entries {
 					width: 10%;
 				}
